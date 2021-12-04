@@ -3,6 +3,65 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class CNN1DImprovement(nn.Module):
+    """For the paper: 
+       An Improved Fault Diagnosis Using 1D-Convolutional NeuralNetwork Model
+    """
+    def __init__(self, input_size=1024, num_features=448, num_classes=10, activation='ReLU'):
+        super(CNN1DImprovement, self).__init__()
+        self.input_size = input_size
+        self.num_classes = num_classes
+        self.num_features = num_features
+        if activation == 'ReLU':
+            self.activation = nn.ReLU()
+        elif activation == 'Tanh':
+            self.activation = nn.Tanh()
+        else:
+            raise ValueError('Not support this activation: ', activation)
+
+        self.extractor = nn.Sequential(
+            nn.Conv1d(1, 128, kernel_size=16, stride=1),
+            self.activation,
+            nn.BatchNorm1d(128),
+            nn.MaxPool1d(2, 2),
+            nn.Dropout(p=0.3),
+
+            nn.Conv1d(128, 64, kernel_size=8, stride=1),
+            self.activation,
+            nn.BatchNorm1d(64),
+            nn.MaxPool1d(2, 2),
+            nn.Dropout(p=0.3),
+
+            nn.Conv1d(64, 32, kernel_size=4, stride=1),
+            self.activation,
+            nn.BatchNorm1d(32),
+            nn.MaxPool1d(2, 2),
+            nn.Dropout(p=0.3),
+
+            nn.Conv1d(32, 16, kernel_size=4, stride=1),
+            self.activation,
+            nn.BatchNorm1d(16),
+            nn.MaxPool1d(2, 2),
+            nn.Dropout(p=0.3),
+
+            nn.Conv1d(16, 8, kernel_size=4, stride=1),
+            self.activation,
+            nn.Dropout(p=0.3), 
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(num_features, 10),
+        )
+
+
+    def forward(self, x):
+        x = self.extractor(x)
+        batch_size = x.shape[0]
+        feature = x.view(batch_size, -1)
+        output = self.classifier(feature)
+
+        return output
+
 class CNN1D(nn.Module):
     def __init__(self, input_size=784, kernel_size=9,
                 stride=2, num_cnn=4, num_kernel=3, padding=0):
@@ -54,10 +113,10 @@ class GrayNet(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(16),
             nn.MaxPool2d(2, 2))
-        self.full = nn.Sequential(nn.Linear(16*7*7, 1024),
+        self.full = nn.Sequential(nn.Linear(16*7*7, 512),
             nn.ReLU(),
-            nn.BatchNorm1d(1024),
-            nn.Linear(1024, 256),
+            nn.BatchNorm1d(512),
+            nn.Linear(512, 256),
             nn.ReLU(),
             nn.BatchNorm1d(256),
             nn.Linear(256, self.num_classes))

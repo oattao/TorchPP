@@ -9,12 +9,12 @@ def read_mat_file(mat_path):
     
     data_key = None
     for key in data.keys():
-        if key.endswith('DE_time'):
+        if key.endswith('FE_time'):
             data_key = key
             break
     
     if data_key is None:
-        raise ValueError("No DE_time data in matfile. Check file.")
+        raise ValueError("No FE_time data is matfile. Check file.")
     
     signal = data[data_key]
     signal = np.squeeze(signal, axis=-1)
@@ -39,7 +39,7 @@ def add_noise(signal, noise_level):
 
 def standardize_image(image):
     image = image / image.max() * 255
-    # image = image.astype(np.uint8)
+    image = image.astype(np.uint8)
     return image
 
 def signal_to_gray_image(signal):
@@ -57,3 +57,10 @@ def signal_to_scalorgram_image(signal):
     image = cv.resize(cwtmatr, (dsize, dsize))
     image = standardize_image(image)
     return image
+
+def trim_signal(signal, sample_length):
+    max_num_samples = len(signal) // sample_length
+    max_len = max_num_samples * sample_length
+    trimed_signal = signal[:max_len]
+    return trimed_signal, max_num_samples
+    
